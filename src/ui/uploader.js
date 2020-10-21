@@ -87,6 +87,10 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/master/LICENS
             "onUploadError.setStateErrorReceived": {
                 func: "{that}.applier.change",
                 args: ["uploadState", "errorReceived"]
+            },
+            "onDestroy.resetUploadState": {
+                changePath: "uploadState",
+                value: "ready"
             }
         },
         invokers: {
@@ -105,10 +109,6 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/master/LICENS
                     "{that}.events.onUploadComplete",
                     "{that}.events.onUploadError"
                 ]
-            },
-            "resetUploadState": {
-                func: "{that}.applier.change",
-                args: ["uploadState", "ready"]
             }
         }
     });
