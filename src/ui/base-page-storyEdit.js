@@ -37,12 +37,21 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                     }
                 },
                 target: "{that storyEditor blockManager}.options.modelListeners"
+            },
+            "blockManager.creatStory": {
+                record: {
+                    "viewComponentContainerRequested.createStory": {
+                        listener: "{storyEdit}.createNewStoryOnServer",
+                        priority: "first"
+                    }
+                },
+                target: "{that storyEditor blockManager}.options.listeners"
             }
         },
         pageSetup: {
             hiddenEditorClass: "hidden",
             storyAutosaveKey: "storyAutosave",
-            storyAutoloadSourceName: "storyAutoload",
+            storyCreationSourceName: "storyCreated",
             storySaveUrl: "/stories/",
             viewPageUrl: "storyView.html",
             storyIdPath: "id"
@@ -212,10 +221,11 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
             createNewStoryOnServer: {
                 funcName: "sjrk.storyTelling.base.page.storyEdit.createNewStoryOnServer",
                 args: [
+                    "{that}",
                     "{that}.options.pageSetup.storySaveUrl",
                     "{storyEditor}.story",
                     "{that}.options.pageSetup.storyIdPath",
-                    "{that}.options.pageSetup.storyAutoloadSourceName",
+                    "{that}.options.pageSetup.storyCreationSourceName",
                     "{that}.events.onStoryCreateOnServerError"
                 ]
             },
@@ -263,7 +273,7 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
             "video": ["mediaUrl"]
         },
         components: {
-            // manaages browser history for in-page forward-back support
+            // manages browser history for in-page forward-back support
             historian: {
                 type: "fluid.locationBar",
                 options: {
@@ -385,11 +395,12 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
             var savedStoryData = JSON.parse(window.localStorage.getItem(storyAutosaveKey));
 
             if (savedStoryData) {
+                if (!storyEdit.createStoryPromise) {
+                    storyEdit.createStoryPromise = fluid.promise();
+                    storyEdit.createStoryPromise.resolve(savedStoryData);
+                }
                 // a story was loaded from autosave, update the current story
                 storyEdit.loadStoryContent(savedStoryData);
-            } else {
-                // there's no autosaved story, create a new unpublished story
-                storyEdit.createNewStoryOnServer();
             }
         } catch (ex) {
             fluid.log(fluid.logLevel.WARN, "An error occurred while initializing story", ex);
@@ -399,32 +410,47 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
     /**
      * Creates a new story on the server and sets the current story's ID accordingly
      *
+     * @param {Component} that - an instance of `sjrk.storyTelling.base.page.storyEdit`
      * @param {String} storySaveUrl - the server URL at which to save a story
      * @param {Component} story - an instance of `sjrk.storyTelling.story`
      * @param {String|String[]} storyIdPath - the model path to the story ID
      * @param {String} sourceName - the name of the Infusion change source for this update
      * @param {Object} errorEvent - the event to be fired in case of an error
+     * @return {Promise} - a promise corresponding to the creation of the story on the server
      */
-    sjrk.storyTelling.base.page.storyEdit.createNewStoryOnServer = function (storySaveUrl, story, storyIdPath, sourceName, errorEvent) {
-        var serverSavePromise = sjrk.storyTelling.base.page.storyEdit.updateStoryOnServer(storySaveUrl, story.model);
+    sjrk.storyTelling.base.page.storyEdit.createNewStoryOnServer = function (that, storySaveUrl, story, storyIdPath, sourceName, errorEvent) {
+        // The createStoryPromise and related workflow is to get around the issue of creating a new database entry each
+        // time that the story edit page is loaded without an autosave record. Without this check the database could be
+        // filled with empty records corresponding to page views from users, bots, and etc.
+        // In the future we should re-examine the workflow/ui interaction to see if there is a better way to manage
+        // story creation.
+        if (!that.createStoryPromise) {
 
-        serverSavePromise.then(function (data) {
-            var successResponse = JSON.parse(data);
+            that.createStoryPromise = fluid.promise();
+            var serverSavePromise = sjrk.storyTelling.base.page.storyEdit.updateStoryOnServer(storySaveUrl, story.model);
 
-            // The "story created" moment is now, since the story was created successfully
-            story.applier.change("timestampCreated", new Date().toISOString(), null, sourceName);
+            serverSavePromise.then(function (data) {
+                var successResponse = JSON.parse(data);
 
-            // store the ID on the story model for later use
-            story.applier.change(storyIdPath, successResponse.id, null, sourceName);
-        }, function (jqXHR, textStatus, errorThrown) {
-            fluid.log(fluid.logLevel.WARN, "Error saving a new story to server:");
-            fluid.log(jqXHR, textStatus, errorThrown);
+                // The "story created" moment is now, since the story was created successfully
+                story.applier.change("timestampCreated", new Date().toISOString(), null, sourceName);
 
-            errorEvent.fire({
-                isError: true,
-                message: fluid.get(jqXHR, ["responseJSON", "message"]) || "Internal server error"
+                // store the ID on the story model for later use
+                story.applier.change(storyIdPath, successResponse.id, null, sourceName);
+            }, function (jqXHR, textStatus, errorThrown) {
+                fluid.log(fluid.logLevel.WARN, "Error saving a new story to server:");
+                fluid.log(jqXHR, textStatus, errorThrown);
+
+                errorEvent.fire({
+                    isError: true,
+                    message: fluid.get(jqXHR, ["responseJSON", "message"]) || "Internal server error"
+                });
             });
-        });
+
+            fluid.promise.follow(serverSavePromise, that.createStoryPromise);
+        };
+
+        return that.createStoryPromise;
     };
 
     /**
@@ -554,27 +580,30 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
      * @param {Object} errorEvent - the event to be fired in case of an error
      */
     sjrk.storyTelling.base.page.storyEdit.publishStory = function (storyEditPage, story, successEvent, errorEvent) {
-        // set the publish timestamp to now and the flag to "true"
-        story.applier.change("", {
-            "timestampPublished": new Date().toISOString(),
-            "published": true
-        });
 
-        var storyUpdatePromise = storyEditPage.updateStoryOnServer();
+        storyEditPage.createNewStoryOnServer().then(function () {
+            // set the publish timestamp to now and the flag to "true"
+            story.applier.change("", {
+                "timestampPublished": new Date().toISOString(),
+                "published": true
+            });
 
-        storyUpdatePromise.done(function () {
-            storyEditPage.clearAutosave();
-            successEvent.fire(story.model.id);
-        });
+            var storyUpdatePromise = storyEditPage.updateStoryOnServer();
 
-        storyUpdatePromise.fail(function (jqXHR, textStatus, errorThrown) {
-            var errorMessage = fluid.get(jqXHR, ["responseJSON", "message"]) ||
-                errorThrown ||
-                "Internal server error";
+            storyUpdatePromise.done(function () {
+                storyEditPage.clearAutosave();
+                successEvent.fire(story.model.id);
+            });
 
-            errorEvent.fire({
-                isError: true,
-                message: errorMessage
+            storyUpdatePromise.fail(function (jqXHR, textStatus, errorThrown) {
+                var errorMessage = fluid.get(jqXHR, ["responseJSON", "message"]) ||
+                    errorThrown ||
+                    "Internal server error";
+
+                errorEvent.fire({
+                    isError: true,
+                    message: errorMessage
+                });
             });
         });
     };

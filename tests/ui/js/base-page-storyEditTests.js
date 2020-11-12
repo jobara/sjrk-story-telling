@@ -888,6 +888,10 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                     args: [{url: "/stories/", response: ""}]
                 },
                 {
+                    funcName: "sjrk.storyTelling.base.page.storyEditTester.mockCreateStoryPromise",
+                    args: ["{storyEdit}"]
+                },
+                {
                     "jQueryTrigger": "click",
                     "element": "{storyEdit}.storyPreviewer.dom.storyShare"
                 },
@@ -936,6 +940,10 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                         ["{storyEdit}.storyEditor.dom.storyMetadataStep", "{storyEdit}.storyPreviewer.container"],
                         ["{storyEdit}.storyEditor.dom.storyEditStoryStep"]
                     ]
+                }, {
+                    // remove createStoryPromise
+                    funcName: "fluid.set",
+                    args: ["{storyEdit}", "createStoryPromise", null]
                 }]
             }]
         },
@@ -1035,6 +1043,10 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                     args: [{url: "/stories/", response: ""}]
                 },
                 {
+                    funcName: "sjrk.storyTelling.base.page.storyEditTester.mockCreateStoryPromise",
+                    args: ["{storyEdit}"]
+                },
+                {
                     "jQueryTrigger": "click",
                     "element": "{storyEdit}.storyPreviewer.dom.storyShare"
                 },
@@ -1053,6 +1065,11 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                 {
                     funcName: "sjrk.storyTelling.base.page.storyEditTester.verifyAutosaveState",
                     args: ["{storyEdit}.options.pageSetup.storyAutosaveKey", sjrk.storyTelling.base.page.storyEditTester.testStoryPreSave]
+                },
+                {
+                    // remove createStoryPromise
+                    funcName: "fluid.set",
+                    args: ["{storyEdit}", "createStoryPromise", null]
                 },
                 {
                     // restart the entire load process
@@ -1080,6 +1097,11 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
             }]
         }]
     });
+
+    sjrk.storyTelling.base.page.storyEditTester.mockCreateStoryPromise = function (storyEdit, resolveData) {
+        storyEdit.createStoryPromise = fluid.promise();
+        storyEdit.createStoryPromise.resolve(resolveData);
+    };
 
     sjrk.storyTelling.base.page.storyEditTester.verifyBlockManager = function (storyEdit, expectedBlockModels) {
         var actualBlockModels = [];
