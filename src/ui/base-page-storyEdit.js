@@ -38,7 +38,7 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                 },
                 target: "{that storyEditor blockManager}.options.modelListeners"
             },
-            "blockManager.creatStory": {
+            "blockManager.createStory": {
                 record: {
                     "viewComponentContainerRequested.createStory": {
                         listener: "{storyEdit}.createNewStoryOnServer",
