@@ -16,29 +16,74 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
     // Provides the Learning Reflections framing to the Storytelling Tool
     fluid.defaults("sjrk.storyTelling.learningReflections.page", {
         gradeNames: ["sjrk.storyTelling.base.page"],
-        distributeOptions: [{
-            target: "{that > menu > templateManager}.options.templateConfig.templatePath",
-            record: "%resourcePrefix/templates/learningReflections-menu.handlebars"
-        },
-        {
-            target: "{that > masthead > templateManager}.options.templateConfig",
-            record: {
-                messagesPath: "%resourcePrefix/messages/learningReflectionMessages.json",
-                templatePath: "%resourcePrefix/templates/learningReflections-masthead.handlebars"
+        // distributeOptions: [{
+        //     target: "{that > menu > templateManager}.options.templateConfig.templatePath",
+        //     record: "%resourcePrefix/templates/learningReflections-menu.handlebars"
+        // },
+        // {
+        //     target: "{that > masthead > templateManager}.options.templateConfig",
+        //     record: {
+        //         messagesPath: "%resourcePrefix/messages/learningReflectionMessages.json",
+        //         templatePath: "%resourcePrefix/templates/learningReflections-masthead.handlebars"
+        //     }
+        // },
+        // {
+        //     target: "{that > footer > templateManager}.options.templateConfig",
+        //     record: {
+        //         messagesPath: "%resourcePrefix/messages/learningReflectionMessages.json",
+        //         templatePath: "%resourcePrefix/templates/learningReflections-footer.handlebars"
+        //     }
+        // }],
+        distributeOptions: {
+            "learningReflections.templateManager.menu": {
+                target: "{that > menu > templateManager}.options.templateConfig.templatePath",
+                record: "%resourcePrefix/templates/learningReflections-menu.handlebars"
+            },
+            "learningReflections.templateManager.masthead": {
+                target: "{that > masthead > templateManager}.options.templateConfig",
+                record: {
+                    messagesPath: "%resourcePrefix/messages/learningReflectionMessages.json",
+                    templatePath: "%resourcePrefix/templates/learningReflections-masthead.handlebars"
+                }
+            },
+            "learningReflections.templateManager.footer": {
+                target: "{that > footer > templateManager}.options.templateConfig",
+                record: {
+                    messagesPath: "%resourcePrefix/messages/learningReflectionMessages.json",
+                    templatePath: "%resourcePrefix/templates/learningReflections-footer.handlebars"
+                }
             }
         },
-        {
-            target: "{that > footer > templateManager}.options.templateConfig",
-            record: {
-                messagesPath: "%resourcePrefix/messages/learningReflectionMessages.json",
-                templatePath: "%resourcePrefix/templates/learningReflections-footer.handlebars"
-            }
-        }],
         components: {
             // the masthead of the site
             masthead: {
                 type: "sjrk.storyTelling.ui",
-                container: ".sjrkc-st-page-header-container"
+                container: ".sjrkc-st-page-header-container",
+                options: {
+                    distributeOptions: {
+                        record: {
+                            "onCreate.log": {
+                                "this": "console",
+                                method: "log",
+                                args: ["onCreate: masthead id -", "{masthead}.id", "messageLoader id -", "{that}.id", "{that}"],
+                                priority: "last"
+                            },
+                            "onResourcesLoaded.log": {
+                                "this": "console",
+                                method: "log",
+                                args: ["onResourcesLoaded: masthead id -", "{masthead}.id", "messageLoader id -", "{that}"],
+                                priority: "last"
+                            },
+                            "onResourceError.log": {
+                                "this": "console",
+                                method: "log",
+                                args: ["onResourceError: masthead id -", "{masthead}.id", "messageLoader id -", "{arguments}.0"],
+                                priority: "last"
+                            }
+                        },
+                        target: "{that templateManager > messageLoader}.options.listeners"
+                    }
+                }
             },
             // the footer of the site
             footer: {

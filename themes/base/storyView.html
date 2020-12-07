@@ -119,7 +119,10 @@
 
 <script>
     $(document).ready(function () {
-        sjrk.storyTelling.loadTheme().then(sjrk.storyTelling.loadStoryFromParameter);
+        sjrk.storyTelling.loadTheme().then(function (config) {
+            sjrk.storyTelling.loadStoryFromParameter(config).then(console.log)
+        });
+        // sjrk.storyTelling.loadTheme().then(sjrk.storyTelling.loadStoryFromParameter);
     });
 </script>
 

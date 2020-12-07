@@ -75,9 +75,28 @@ https://raw.githubusercontent.com/fluid-project/sjrk-story-telling/main/LICENSE.
                             "func": "sjrk.storyTelling.templateManager.loadLocalizedMessages",
                             "args": ["{that}.resources.componentMessages.parsed",
                                 "{templateManager}",
-                                ["templateStrings", "localizedMessages"]]
+                                ["templateStrings", "localizedMessages"]],
+                            "priority": "before:escalate"
                         },
-                        "onResourcesLoaded.escalate": "{templateManager}.events.onMessagesLoaded.fire"
+                        "onResourcesLoaded.escalate": "{templateManager}.events.onMessagesLoaded.fire",
+                        // "onCreate.log": {
+                        //     "this": "console",
+                        //     method: "log",
+                        //     args: ["onCreate:", "{that}.id", "{that}"],
+                        //     priority: "last"
+                        // },
+                        // "onResourcesLoaded.log": {
+                        //     "this": "console",
+                        //     method: "log",
+                        //     args: ["onResourcesLoaded:", "{that}.id", "{that}"],
+                        //     priority: "last"
+                        // },
+                        // "onResourceError.log": {
+                        //     "this": "console",
+                        //     method: "log",
+                        //     args: ["onResourceError:", "{arguments}.0"],
+                        //     priority: "last"
+                        // }
                     }
                 }
             },
