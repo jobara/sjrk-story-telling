@@ -34,7 +34,7 @@
         "infusion": "3.0.0-dev.20210204T181946Z.3ed160b36.FLUID-6580",
         "jpeg-autorotate": "7.1.1",
         "jpeg-exif": "1.1.4",
-        "kettle": "1.15.1",
+        "kettle": "2.1.0",
         "markdown-it": "12.0.4",
         "memorystore": "1.6.4",
         "uuid": "8.3.2"
